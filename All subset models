@@ -1,0 +1,180 @@
+## ex:- 2
+setwd("C:/Users/Bharat.Warule/Desktop/svm_data")
+test_sample <- read.csv("test_sample.csv")
+library(gdata)
+library(plyr)
+
+
+stepbystepRegression <-  function(DataIn,RespVar,regressors=NULL,ModelType='glm'){
+  
+	## The step-by-step approach
+	
+	## Let’s suppose we have the following 
+	## set of varaibles(regressors).
+	if(is.null(regressors)){
+		regressors <- names(DataIn)}
+	
+	regressors <- regressors[!(regressors %in% RespVar)] 
+	no_of_varaibles <- length(regressors)
+	
+	
+	if(no_of_varaibles <= 11){
+		Text <- paste("expand.grid(",
+						paste(rep("c(TRUE,FALSE)", no_of_varaibles),
+ 							collapse=","), ")", sep="")
+		regMat <- eval(parse(text = Text))
+		}else{
+		Text <- paste("expand.grid(",
+					paste(rep("c(TRUE,FALSE)", 11),
+							collapse=","), ")", sep="")
+		regMat <- eval(parse(text = Text))
+		lencret <- no_of_varaibles -11
+		for(j in 1:lencret){
+			var_name <- paste('Var',j+11,sep="")
+			regMat1 <- regMat2 <- regMat 			
+			regMat1$VarCreted <- TRUE
+ 			regMat2$VarCreted <- FALSE
+			rm(regMat)
+ 			regMat <- rbind(regMat1,regMat2)
+		    rename.vars(regMat, from="VarCreted", to=var_name, info=TRUE)
+			rm(regMat2)
+			rm(regMat1)
+			gc()
+			}
+		}
+	
+	regMatp <- apply(regMat,1, pastefun <- function(x)paste(x, collapse = ','))
+	## The last line describes a trivial model
+ 	## as it does not contain any regressors 
+	## (as it contains only FALSE values), thus it is removed.
+    regMat <- regMat[-(dim(regMat)[1]),]
+	
+	allModelsList <- apply(regMat, 1, function(x) as.formula(
+                       paste(c(paste(RespVar,"~ 1",sep=""), regressors[x]),
+                             collapse=" + ")))
+					
+	if(ModelType=='glm'){
+		allModelsResults <-
+		lapply(allModelsList,
+			function(x) glm(x, data=DataIn, family=binomial(link="logit")))
+		dist_value <- "z value"
+		prob  <- "Pr(>|z|)"
+		}else{
+		allModelsResults <-
+		lapply(allModelsList,
+			function(x) lm(x, data=DataIn)) 
+		
+		dist_value <- "t value"
+		prob  <- "Pr(>|t|)"
+		
+		}
+	
+    
+	dfCoefNum   <- 
+	ldply(allModelsResults, function(x) as.data.frame(t(coef(x))))
+	dfStdErrors <- 
+	ldply(allModelsResults, 
+		function(x) as.data.frame(t(coef(summary(x))[, "Std. Error"])))
+	dftValues   <- 
+	ldply(allModelsResults,
+ 		function(x) as.data.frame(t(coef(summary(x))[, dist_value])))
+	
+	dfpValues   <-
+ 	ldply(allModelsResults, 
+		function(x) as.data.frame(t(coef(summary(x))[, prob]))) 
+	
+	## Rename DFs so we know what the column contains
+	names(dfStdErrors) <- paste("se", names(dfStdErrors), sep=".")
+	names(dftValues) <- paste("t", names(dftValues), sep=".")
+	names(dfpValues) <- paste("p", names(dfpValues), sep=".")	
+	
+	## p-value for overall model fit
+	calcPval <- function(x){
+		fstat <- summary(x)$fstatistic
+		pVal <- pf(fstat[1], fstat[2], fstat[3], lower.tail = FALSE)
+		return(pVal)
+	}
+	
+	## Before creating ONE data frame with all important entries,
+	## we need to compute some more indices 
+	## NoOfCoef <- unlist(apply(regMat, 1, sum))
+	## R2       <- unlist(lapply(allModelsResults, function(x)
+	##	                          summary(x)$r.squared))
+	## adjR2    <- unlist(lapply(allModelsResults, function(x)
+	##	                          summary(x)$adj.r.squared))
+	## RMSE     <- unlist(lapply(allModelsResults, function(x)
+	## 	                          summary(x)$sigma))
+	## fstats   <- unlist(lapply(allModelsResults, calcPval))
+		
+	## Now We can combine all the data into one data frame
+	results <- data.frame( model = as.character(allModelsList),
+		              ##  NoOfCoef = NoOfCoef,
+                       dfCoefNum,
+                       dfStdErrors,
+                       dftValues,
+                       dfpValues
+                      ## R2 = R2,
+                      ## adjR2 = adjR2,
+                      ## RMSE = RMSE,
+                      ## pF = fstats 
+ 					  )
+	print("code come!")			
+	gc()			
+    # round the results
+	## results[,-c(1,2)] <- round(results[,-c(1,2)], 3)
+	return(results)
+}
+
+## DataIn,RespVar,regressors=NULL
+results <- stepbystepRegression(test_sample,'p_1',regressors = c(names(test_sample)[3:12]))
+
+vars <- c(names(test_sample)[3:12])
+pdf("Coeff_vs_Std.error3to12.pdf")
+for(i in 1:length(vars)){
+	variablName <- vars[i]
+	
+	resultsIn <- results[!is.na(results[,variablName]),]
+	Coeff <- resultsIn[,variablName]
+	Std.Error <- resultsIn[,paste("se",variablName,sep=".")]
+	Models_coefficient <- 1:length(Coeff)
+	
+	
+	## Define Margins. The trick is to use give 
+	## as much space possible on the left margin (second value)
+	
+	par(mar=c(5, 12, 4, 4) + 0.1)
+	
+	plot(Models_coefficient, Coeff , axes=F, 
+		 ylim=c(min(Coeff),max(Coeff)), xlab="", 
+		 ylab="", type="l", col="blue",
+ 		 main="",
+		 xlim=c(1,length(Models_coefficient)))
+	
+	points(Models_coefficient, Coeff, pch=20,col="black")
+	axis(2, ylim=c(0,max(Coeff)),col="black",lwd=2)
+	mtext(2,text='Coeff value',line=2)
+
+	par(new=T)
+	plot(Models_coefficient, Std.Error , axes=F, 
+		ylim=c(min(Std.Error),max(Std.Error )), xlab="", ylab="", 
+		type="l",col="red",
+		lty=2, main="",xlim=c(1,length(Models_coefficient)),lwd=2)
+	
+	axis(2, ylim=c(min(Std.Error),max(Std.Error)),lwd=2,line=3.5)
+	points(Models_coefficient, Std.Error ,pch=20)
+	mtext(2,text="Std.Error",line=5.5)	
+	
+	axis(1,pretty(range(Models_coefficient),10))
+	mtext("Different Models",side=1,col="black",line=2)
+	
+	legend("topright", inset=.001, 
+			   legend=c("Coeff.","Std.Error"),
+			   fill=c("blue","red"), horiz=FALSE)
+		
+	title(main = list(paste("Coeff. ",variablName,sep=""), 
+		 cex=1.2,col="purple", font=3))	
+	}
+dev.off()
+
+
+write.csv(results,'results.csv')
