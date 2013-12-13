@@ -1,0 +1,34 @@
+view,disc
+Bayesian,Bayesian Inference
+ChemPhys,Chemometrics and Computational Physics
+ClinicalTrials,"Clinical Trial Design, Monitoring, and Analysis"
+Cluster,Cluster Analysis & Finite Mixture Models
+DifferentialEquations,Differential Equations
+Distributions,Probability Distributions
+Econometrics,Computational Econometrics
+Environmetrics,Analysis of Ecological and Environmental Data
+ExperimentalDesign,Design of Experiments (DoE) & Analysis of Experimental Data
+Finance,Empirical Finance
+Genetics,Statistical Genetics
+Graphics,Graphic Displays & Dynamic Graphics & Graphic Devices & Visualization
+HighPerformanceComputing,High-Performance and Parallel Computing with R
+MachineLearning,Machine Learning & Statistical Learning
+MedicalImaging,Medical Image Analysis
+MetaAnalysis,Meta-Analysis
+Multivariate,Multivariate Statistics
+NaturalLanguageProcessing,Natural Language Processing
+NumericalMathematics,Numerical Mathematics
+OfficialStatistics,Official Statistics & Survey Methodology
+Optimization,Optimization and Mathematical Programming
+Pharmacokinetics,Analysis of Pharmacokinetic Data
+Phylogenetics,"Phylogenetics, Especially Comparative Methods"
+Psychometrics,Psychometric Models and Methods
+ReproducibleResearch,Reproducible Research
+Robust,Robust Statistical Methods
+SocialSciences,Statistics for the Social Sciences
+Spatial,Analysis of Spatial Data
+SpatioTemporal,Handling and Analyzing Spatio-Temporal Data
+Survival,Survival Analysis
+TimeSeries,Time Series Analysis
+WebTechnologies,Web Technologies and Services
+gR,gRaphical Models in R
